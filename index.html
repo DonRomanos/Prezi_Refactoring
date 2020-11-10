@@ -37,14 +37,13 @@ class: typo, typo-selection
 
 ---
 
-count: false
 class: middle, pure_code
 
 ```cpp
 std::string rep_s(const std::string& input, int n)
 {
   std:: string s = input;
-  if( n > 1)
+  if( n > 1 && !s.empty())
   {
     char* c = s.data();
     while(*(++c));
@@ -60,23 +59,30 @@ std::string rep_s(const std::string& input, int n)
 ```
 ---
 
-count: false
 class: middle, pure_code
 
 ```cpp
-std::string replace_last_character_with_s(const std::string& input)
+...
+if( !in.empty() && shouldReplace())
 {
-  std::string result = input;
-  result.replace(input.length()-1, 1, "s");
-  return result;
+  return replace_last_character_with_s(in);
+}
+else
+{
+  return "error";
+}
+...
+std::string replace_last_character_with_s(std::string to_replace)
+{
+  to_replace.replace(to_replace.length()-1, 1, "s");
+  return to_replace;
 }
 ```
 ---
 
-count: true
 class: middle
 
-.center[![](./images/technical-debt.png)]
+.center[![Technical Debt](./images/technical-debt.png)]
 
 ---
 
@@ -90,347 +96,169 @@ Martin Fowler:
 
 class: nord-dark, center, middle
 
-# Writing good Tests is hard
-
---
-<small>.letter-spacing-20[and takes practice...]</small>
-
----
-class: center
-
-# TDD to the Rescue
-
-.center[![](./images/red-green-refactor.png)]
-
----
-
-class: nord-dark, center, middle
-
-# Thank you for your attention
-
-<small>.letter-spacing-20[Any Questions?]</small>
-
----
-
-class: center, middle
-
-Martin Fowler: 
-
-"Refactoring (noun): a change made to the internal structure of software to make it easier to understand and cheaper to modify without changing its observable behavior."
-
----
-# The true Power of TDD
-
-It forces you to think about your Requirements
+<small>.letter-spacing-20[Compile - Test - Commit]</small>
 
 --
 
-It forces you to design your code for testability
-
+# Always leave the place better than you found it
 --
-
-Proper tests are the best documentation
-
---
-
-It takes away your fear and gives you trust
 
 ---
 
-# An example from our Codebase
-
-```cpp
-struct SimilarPerson
-{
-    std::string name;
-    float similarityScore          = 0.0f;
-    float similarityScoreThreshold = 1.0f;
-    bool isIdentified              = false;
-};
-
-std::shared_ptr<const SimilarPerson> FaceUnlock::identifyAndPad(image...)
-```
---
-What is the name when the person in the image is unknown? 
-
---
-
-What is the name when there is no person in the image?
-
----
-
-# What if we had a test like this?
-
-```cpp
-SECTION("Should not identify anything without a person")
-{
-  auto result = toTest->identifyAndPad(imageNothing, ...);
-
-  CHECK(result.similarityScore < 0.0f);
-  CHECK(result.name.empty());
-}
-
-SECTION("Should not identify the wrong person")
-{
-  auto result = toTest->identifyAndPad(imageWrongPerson, ...);
-
-  CHECK(result.similarityScore < 0.1f 
-     && result.similarityScore > 0.0f);
-  CHECK(result.name == "unknown");
-}
-```
-
----
-
-# What if we had written the test first?
-
---
-
-```cpp
-enum class FailureReason
-{
-  NoFailure,
-  NoFaceDetected,
-  ...
-}
-
-struct IdentificationResult
-{
-  std::optional<std::string> name;
-  FailureReason reason;
-}
-
-*IdentificationResult FaceUnlock::identifyAndPad(image...)
-
-```
-
----
-
-# Lets start from the beginning
-
-We want to add a reflection like Functionality to query Parameters of an algorithm at runtime and make them adjustable in a UI.
-
---
-
-* Parameters can be grouped
-* We need the following basic types: bool, int, double, string and arrays of those
-* Parameters and Parameter Groups can be nested
-* You can Iterate over Parameters and Parameter Groups
-* Parameters can be loaded from and written as Json
-
---
-
-Right thats what the X-Framework does... Lets do it better
-
----
-
-# We write a Test
-
-```cpp
-
-SCENARIO("Using a Parameter from a Json string in Code")
-{
-  GIVEN("A boolean Parameter")
-  {
-    ParameterGroup parameters = loadJson("{"thisIsMyName": true}")
-    WHEN("The value of the parameter is true in json")
-    {
-      THEN("The value of the Parameter should be true in Code")
-      {
-        REQUIRE(parameters.thisIsMyName == true);
-      }
-    }
-  }
-}
-```
----
-
-# After a first Review
-
-```cpp
-SCENARIO("Using a Parameter from a Json string in Code")
-{
-  GIVEN("A boolean Parameter")
-  {
-    ParameterGroup parameters = loadJson("{"thisIsMyName": true}")
-    WHEN("The value of the parameter is true in json")
-    {
-      THEN("The value of the Parameter should be true in Code")
-      {
-*       REQUIRE(parameters["thisIsMyName"] == true);
-      }
-    }
-  }
-}
-```
----
-# First step lets make it compile and Fail
-
-```cpp
-class ParameterGroup
-{
-public:
-  bool operator [](std::string_view key) const {return false;}
-}
-
-ParameterGroup loadJson(std::string_view json)
-{
-  return ParameterGroup{};
-}
-```
---
-[Live on Compiler Explorer](https://godbolt.org/z/nPozce)
-
----
-
-# Now lets make it pass
-
-How can we do this in the easiest possible way?
-
---
-```cpp
-class ParameterGroup
-{
-public:
-*  bool operator [](std::string_view key) const {return true;}
-}
-```
---
-
-Now our test is green and we have a good indication that our test is actually working the way it should and we can start to refactor
-
----
-
-# Refactoring Step #1
-```cpp
-class ParameterGroup
-{
-public:
-   bool operator [](std::string_view key) const {return values[key];}
-private:
-   std::map<std::string, bool> values;
-}
-```
---
-Oh no we did never actually specify what should happen when the Parameter is not available...
----
-# Lets add another Test 
-
-```cpp
-GIVEN("A boolean Parameter")
-{
-  ParameterGroup parameters = loadJson("{"thisIsMyName": true}")
-  WHEN("The value of the parameter is true in json")
-  {
-    //...
-  }
-  WHEN("We ask for a parameter name that does not exist")
-  {
-    THEN("Expect a runtime exception")
-    {
-      CHECK_THROWS(parameters["NonexistingName"]);
-    }
-  ...
-```
----
-# Refactoring Step #2
-```cpp
-class ParameterGroup
-{
-public:
-   bool operator [](std::string_view key) const 
-   {
-     if( values.find(key) == values.end())
-     {
-       throw std::runtime_error("Trying to access a parameter that does not exist");
-     }
-     return values[key];
-   }
-private:
-   std::map<std::string, bool> values;
-}
-```
----
-# Refactoring Step #3
-```cpp
-class ParameterGroup
-{
-  ParameterGroup(const std::vector<Parameter>& parameters)
-  {
-    for(const auto& parameter : parameters)
-    {
-      values[parameter.name] = parameter.value;
-      ...
-
-ParameterGroup loadJson(std::string_view json)
-{
-  std::vector<Parameter> resultOfParsing = parseJson(json);
-  return ParameterGroup{resultOfParsing};
-}
-```
---
-[Example on Godbolt](https://godbolt.org/z/srhGGe)
-
----
-# Refactoring Step #4
-
-Now we have done the basics for a boolean parameter, lets add some other type, for example double or string
-
---
-
-**As usual the difficult part is left as an exercise for you!**
-
-*Good Luck!*
-
+# Insert Comic or Cat Picture or Something Funny
 
 ---
 class: nord-dark, center, middle
 
-# Now its your turn to practice
+# Let's do a Quiz!
+
+--
+
+<small>.letter-spacing-20[You get one point for each correct Answer]</small>
 
 ---
-# Get to Work!
+class: nord-dark, center, middle
 
-Use TDD in your favourite Language (I recommend Python) to create a Testing Framework which you use to test itself *#Testception*. 
-
-It should be able to do the following:
-
-* Invokes a test method
-* Invokes setup first
-* Invokes tearDown last
-* Invokes tearDown even if the test fails
+# When to refactor?
 
 --
 
-If you have any Questions or Suggestions just ask! I recommend doing this in groups of two or more people.
+<small>.letter-spacing-20[Always]</small>
+
+--
+
+<small>.letter-spacing-20[Especially when it smells]</small>
 
 ---
-class: middle
 
-# Some Personal Recommendations
+# Too many Indentations
 
-Use the tests for design reviews, discussions and documentation, they use the public interface of a function / class 
-
---
-
-Test for important behavior, e.g. exceptions, wrong input,... not only the happy path
-
---
-
-Use good naming, e.g. "Should return nullptr result when no face is in the image"
-
---
-
-If you have good tests, you (almost) never have to write tutorials or examples
-
---
-
-Test the right thing on the right Level, Module-, Unit-, Integration-, Benchmark-, Performance-Tests look differently and have different purposes
+```cpp
+if(!((access & flags) != flags))
+{
+    if((flags & Access::Read))
+    {
+        const bool typeSizeMatches = (sizeof(T) == buffer->m_ElementSize);
+        if(!typeSizeMatches)
+        {
+            ...
+        }
+        if(!(flags & Access::Write))
+        {
+            const bool typeIsConst = std::is_const<T>::value;
+            if(typeIsConst)
+            {           
+```
 
 ---
-class: center, middle
 
-#Kent Beck: "Test Driven Development: By Example"
+# Too many Parameters in a Function
+
+
+```cpp
+std::vector<float> forward(const uint8_t* laserImage, 
+                           const uint8_t* floodImage, 
+                           int w, int h, 
+                           int centerX, int centerY);
+
+```
+--
+```cpp
+std::vector<float> spotResult = m->mnn_executer.forward(
+  laserImgPtr,
+  floodImgPtr,
+  widthLaser,
+  heightLaser,
+  laserPoints->at(pointIndex).imageCoordinate.x(),
+  laserPoints->at(pointIndex).imageCoordinate.y());
+```
+
+---
+
+# Too long Functions
+
+.center[![Technical Debt](./images/LongFunctionBegin.png)]
+```cpp
+// Complex Code with a lot of branching and Logic
+```
+.center[![Technical Debt](./images/LongFunctionEnd.png)]
+---
+
+# Too long Class Declarations
+
+```cpp
+class COMPONENT_DECL DataBuffer : public std::enable_shared_from_this<DataBuffer>
+{
+  public:
+      /// MetaData related constants.
+      enum MetaData : unsigned int
+      {
+          VERSION = 0  ///< Version information.
+      };
+  
+    ...
+    300 lines later
+    ...
+}
+```
+---
+
+# Class names containing `Data`, `Manager`, `Component`, `Module`, ...
+
+```cpp
+class COMPONENT_DECL DataBuffer
+class COMPONENT_DECL DataBufferFactory
+struct PickPointData
+class DATABUFFERSTREAMING_DECL DataBufferServer
+class DATABUFFERSTREAMING_DECL DataBufferClient
+class FEATUREGENERATOR_DECL DNNManager
+class USB_DECL Manager
+class IMAGEANALYZING_DECL HistoryManager
+...
+```
+
+---
+
+# Personal Recommendations
+
+Write Tests
+
+--
+
+Refactor before implementing a Feature
+
+--
+
+Separate Refactoring from Feature Implementation
+
+--
+
+Do ridicolously small Steps
+
+--
+
+Commit often (even things like renaming)
+
+--
+
+Be as specific as you can
+
+--
+
+Don't worry about Performance
+
+---
+class: nord-dark, center, middle
+
+# The Gilded Rose
+
+---
+
+# Did you know?
+
+[The Refactoring Catalog](https://refactoring.com/catalog/)
+![The Refactoring Catalog](./images/RefactoringCatalog.png)
+
 </textarea>
 
     <script src="js/remark.min.js"></script>
