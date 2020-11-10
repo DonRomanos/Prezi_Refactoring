@@ -41,22 +41,20 @@ count: false
 class: middle, pure_code
 
 ```cpp
-void MobilePiServer::dataBufferHandler(shared_ptr<X::DataBuffer> db)
+std::string rep_s(const std::string& input, int n)
 {
-  Network::Data::Header header;
-  payloadSize     = db->getSizeInBytes();
-  // ... some code
-
-  // just use uint8_t to get the void*
-  auto map = db->mapReadOnly<const uint8_t>();
-  if(!map.isValid())
+  std:: string s = input;
+  if( n > 1)
   {
-      X_ERROR("Failed to acces db memory");
+    char* c = s.data();
+    while(*(++c));
+    *c = 's'
+    return s;
   }
-
-  // some more code ...
-
-  m_Server->sendImage(header, map.get(), payloadSize); // simplified
+  else
+  {
+    return "error";
+  }
 }
 
 ```
@@ -66,52 +64,30 @@ count: false
 class: middle, pure_code
 
 ```cpp
-void MobilePiServer::dataBufferHandler(shared_ptr<X::DataBuffer> db)
+std::string replace_last_character_with_s(const std::string& input)
 {
-  Network::Data::Header header;
-  payloadSize     = db->getSizeInBytes();
-  // ... some code
-
-  // just use uint8_t to get the void*
-  auto map = db->mapReadOnly<const uint8_t>();
-  if(!map.isValid())
-  {
-      X_ERROR("Failed to acces db memory");
-*     return;
-  }
-
-  // some more code ...
-
-  m_Server->sendImage(header, map.get(), payloadSize); // simplified
+  std::string result = input;
+  result.replace(input.length()-1, 1, "s");
+  return result;
 }
 ```
 ---
 
 count: true
-class: middle, pure_code
+class: middle
 
-```cpp
-TEST_CASE("Local image", "[AcquisitionMobilePi]")
-{
-    auto server = createServer();
-    auto client = createClient();
-
-    X::Acquisition::Network::Buffer buffer;
-    // put some data into buffer ...
-    
-    int sendCnt = 0;
-    for(int i = 0; i < 100; i++)
-    {
-        bool sendSuccess = server->sendImage(buffer,...)
-        REQUIRE(sendSuccess);
-        ++sendCnt;
-    }
-
-    REQUIRE(sendCnt == 100)
-}
-```
+.center[![](./images/technical-debt.png)]
 
 ---
+
+class: center, middle
+
+Martin Fowler: 
+
+"Refactoring (noun): a change made to the internal structure of software to make it easier to understand and cheaper to modify without changing its observable behavior."
+
+---
+
 class: nord-dark, center, middle
 
 # Writing good Tests is hard
