@@ -36,6 +36,8 @@ layout: true
 class: typo, typo-selection
 
 ---
+background-image: url(./images/Area51.jpg)
+---
 
 class: middle, pure_code
 
@@ -80,9 +82,7 @@ std::string replace_last_character_with_s(std::string to_replace)
 ```
 ---
 
-class: middle
-
-.center[![Technical Debt](./images/technical-debt.png)]
+background-image: url(./images/technical-debt.png)
 
 ---
 
@@ -105,7 +105,7 @@ class: nord-dark, center, middle
 
 ---
 
-# Insert Comic or Cat Picture or Something Funny
+background-image: url(./images/Priorities.jpg)
 
 ---
 class: nord-dark, center, middle
@@ -115,6 +115,82 @@ class: nord-dark, center, middle
 --
 
 <small>.letter-spacing-20[You get one point for each correct Answer]</small>
+
+---
+
+# **#1** First thing you do when refactoring this?
+
+```cpp
+std::string rep_s(const std::string& input, int n)
+{
+  std:: string s = input;
+  if( n > 1 && !s.empty())
+  {
+    char* c = s.data();
+    while(*(++c));
+    *c = 's'
+    return s;
+  }
+  else ...
+```
+
+---
+
+# **#2** How can you and **How** will you improve this?
+
+```cpp
+void print() 
+{
+    printBanner();
+ 
+    //print details
+    cout << "name:" <<  m_name << endl;
+    cout << "amount" << m_amount << endl;
+}
+```
+---
+# **#2** How can you and **How** will you improve this?
+
+```cpp
+void printDetails()
+{
+  cout << "name:" <<  m_name << endl;
+  cout << "amount" << m_amount << endl;
+}
+
+void print() 
+{
+    printBanner();
+*   printDetails(); 
+}
+```
+
+--
+
+Use tool support, most IDEs have an `ExtractMethod` Refactoring
+
+---
+
+# **#3** Which negative impact of the following refactoring should you be worried about?
+
+```cpp
+// before
+for(int i = 0; i < container.size(); ++i)
+{
+  sum += container[i];
+  mult *= container[i];
+}
+```
+
+```cpp
+// after
+sum = accumulate(conainter);
+mult = multiply(container);
+```
+---
+class: center, middle
+
+# How many Points did you get?
 
 ---
 class: nord-dark, center, middle
@@ -177,11 +253,11 @@ std::vector<float> spotResult = m->mnn_executer.forward(
 
 # Too long Functions
 
-.center[![Technical Debt](./images/LongFunctionBegin.png)]
+.center[![Long Function Begin](./images/LongFunctionBegin.png)]
 ```cpp
 // Complex Code with a lot of branching and Logic
 ```
-.center[![Technical Debt](./images/LongFunctionEnd.png)]
+.center[![Long Function End](./images/LongFunctionEnd.png)]
 ---
 
 # Too long Class Declarations
@@ -241,7 +317,11 @@ Commit often (even things like renaming)
 
 --
 
-Be as specific as you can
+Use your tool support, there is a lot
+
+--
+
+Be as specific as you can, make clear in Code what your intention is
 
 --
 
@@ -258,6 +338,9 @@ class: nord-dark, center, middle
 
 [The Refactoring Catalog](https://refactoring.com/catalog/)
 ![The Refactoring Catalog](./images/RefactoringCatalog.png)
+
+---
+background-image: url(./images/WtfsPerMinute.jpg)
 
 </textarea>
 
